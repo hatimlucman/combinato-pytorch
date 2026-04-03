@@ -9,7 +9,7 @@ def handle_random_seed(seed=None):
     
     if(seed is None):
         # Generate a random seed
-        random_seed = np.random.random() * 2**32
+        random_seed = 12345.0
         print(f"Generated random seed: {random_seed}")
     else:
         random_seed = seed
