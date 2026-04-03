@@ -1,21 +1,27 @@
-import torch, numpy as np
-from scipy.io import loadmat
-from combinato_algorithm import CombinatoAlgorithm
+import torch
+import h5py
+from combinato_algorithm import CombinatoAlgorithm, validate_sorting
 
-mat    = loadmat('simulation_5.mat')
-fdata  = mat['data'].ravel().astype('float64') * 100
-sr     = float(mat['sr'].ravel()[0]) if 'sr' in mat else 24000.0
-atimes = np.linspace(0, fdata.shape[0] / (sr / 1000), fdata.shape[0])
+# Create the model
+model = CombinatoAlgorithm(spc_path=r"C:\Users\hp\Downloads\combinato\spc\cluster.exe")
 
-signal = torch.tensor(fdata,  dtype=torch.float64)
-times  = torch.tensor(atimes, dtype=torch.float64)
+# Load original extracted spikes for fair sorting comparison
+with h5py.File(r"C:\Users\hp\Downloads\combinato\simulation_5\data_simulation_5.h5", 'r') as f:
+    original_spikes = torch.tensor(f['pos']['spikes'][:], dtype=torch.float32)
 
-model = CombinatoAlgorithm(spc_path=r'C:\Users\hp\Downloads\combinato\spc')
+# Sort using original spikes
 with torch.no_grad():
-    result = model(signal, times)
+    sort_idx, match_idx, distance, artifact_ids = model.sorter(
+        original_spikes, 'test_sort_pos', sign='pos')
 
-print('pos clusters:', len(set(result['pos_sort_idx']) - {0}))
-print('neg clusters:', len(set(result['neg_sort_idx']) - {0}))
-print('pos artifacts:', result['pos_artifact_ids'])
-print('neg artifacts:', result['neg_artifact_ids'])
-print('timings:', result['timings'])
+# Validate against ground truth
+sort_result = {
+    'pos_sort_idx': sort_idx,
+    'pos_artifact_ids': artifact_ids,
+}
+
+passed_s, report_s = validate_sorting(
+    sort_result,
+    r"C:\Users\hp\Downloads\combinato\simulation_5\sort_pos_simple\sort_cat.h5"
+)
+print(report_s)

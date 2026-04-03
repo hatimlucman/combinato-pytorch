@@ -11,10 +11,10 @@ Design note on numerical precision:
 """
 
 import torch
-import torch.nn as nn
 import torchaudio
 import numpy as np
 from scipy.signal import ellip
+from block import Block
 
 DETECT_LOW   = 300
 DETECT_HIGH  = 1000
@@ -24,7 +24,7 @@ NOTCH_LOW    = 1999
 NOTCH_HIGH   = 2001
 
 
-class Preprocessor(nn.Module):
+class Preprocessor(Block):
     def __init__(self, sample_rate=24000):
         super().__init__()
         timestep = 1.0 / sample_rate
